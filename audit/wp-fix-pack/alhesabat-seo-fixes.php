@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Al Hesabat SEO Fixes (mu-plugin)
  * Description: Meta titles/descriptions, JSON-LD, Open Graph, sitemap clean-up, noindex of off-topic content, security headers, "#form" link and empty-alt fixes. Draft by the Al Hesabat SEO Chief. Install in wp-content/mu-plugins/ after review.
- * Version: 1.2
+ * Version: 1.3
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
@@ -126,7 +126,11 @@ add_action( 'send_headers', function () {
 /* Output fixes: "#form" links -> /contact/, empty alt text, tel/mailto links */
 add_action( 'template_redirect', function () {
 	if ( is_admin() || is_feed() ) { return; }
-	ob_start( function ( $html ) {
+	$ah_page = ah_key();
+	ob_start( function ( $html ) use ( $ah_page ) {
+		$html = ah_fix_headings( $html, $ah_page );
+		$html = str_replace( 'UAE,,', 'UAE,', $html );
+		$html = preg_replace( '/growth\.\.(?!\.)/', 'growth.', $html );
 		$contact = esc_url( home_url( '/contact/' ) );
 		$html = preg_replace( '/href=(["\'])#form\1/i', 'href="' . $contact . '"', $html );
 		$html = preg_replace_callback( '/<img\b([^>]*?)>/i', function ( $m ) {
@@ -143,3 +147,49 @@ add_action( 'template_redirect', function () {
 		return $html;
 	} );
 }, 0 );
+
+
+/* Heading fixes: exactly one H1 per page, no repeated heading spam */
+function ah_fix_headings( $html, $page ) {
+	if ( 'home' === $page ) {
+		// Keep the first H1, turn any further H1 into an H2 with the same classes.
+		$n = 0;
+		$html = preg_replace_callback( '/<(\/?)h1\b([^>]*)>/i', function ( $m ) use ( &$n ) {
+			if ( '' === $m[1] ) { $n++; return $n > 1 ? '<h2' . $m[2] . '>' : $m[0]; }
+			return $n > 1 ? '</h2>' : $m[0];
+		}, $html );
+		// The closing-tag pass above depends on order; fix mismatches defensively.
+	}
+	$promote = array( 'services' => 'Services', 'contact' => 'Contact Us' );
+	if ( isset( $promote[ $page ] ) && ! preg_match( '/<h1\b/i', $html ) ) {
+		$t = preg_quote( $promote[ $page ], '/' );
+		$html = preg_replace( '/<h2([^>]*)>(\s*' . $t . '\s*)<\/h2>/i', '<h1$1>$2</h1>', $html, 1 );
+	}
+	if ( 'services' === $page ) {
+		// Repeated "Internal Controls & Compliance" headings: keep the first as a heading, make the rest plain blocks (same look).
+		$seen = 0;
+		$html = preg_replace_callback( '/<h2([^>]*)>(\s*Internal Controls (?:&amp;|&#038;|&) Compliance\s*)<\/h2>/i', function ( $m ) use ( &$seen ) {
+			$seen++;
+			return $seen > 1 ? '<div' . $m[1] . '>' . $m[2] . '</div>' : $m[0];
+		}, $html );
+	}
+	return $html;
+}
+
+/* llms.txt for AI search (draft text, no prices, no unverified dates) */
+add_action( 'template_redirect', function () {
+	$path = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+	if ( '/llms.txt' !== $path ) { return; }
+	header( 'Content-Type: text/plain; charset=utf-8' );
+	echo "# Al Hesabat Financial Consulting (الحسابات للاستشارات المالية)\n\n";
+	echo "> Financial consulting and clinical costing support for clinics and healthcare providers in Abu Dhabi, UAE.\n\n";
+	echo "## Services\n";
+	echo '- Clinical costing and DOH submission support: ' . home_url( '/services/' ) . "\n";
+	echo "- Financial performance management, accounting and reporting, UAE VAT compliance support, internal controls\n\n";
+	echo "## About and contact\n";
+	echo '- About: ' . home_url( '/about-us/' ) . "\n";
+	echo '- Contact: ' . home_url( '/contact/' ) . "\n";
+	echo '- Phone: ' . AH_PHONE . ', ' . AH_PHONE_2 . "\n";
+	echo '- Email: ' . AH_EMAIL . "\n";
+	exit;
+}, 1 );

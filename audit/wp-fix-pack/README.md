@@ -15,3 +15,6 @@ Manual in Elementor (cannot be done by code safely):
 7. Arabic pages with hreflang (needs WPML/Polylang or a new Arabic page set and native review).
 8. Privacy policy and consent notice (legal check first).
 After install: re-test schema in Google's Rich Results Test, then connect Search Console and submit wp-sitemap.xml.
+
+## v1.3 additions
+Heading fixes in code (home: one H1; Services and Contact: top heading becomes H1; repeated "Internal Controls & Compliance" headings become plain blocks), typo fixes ("UAE,,", "growth.."), both phone numbers in schema, /llms.txt. Still manual: clickable phone/email, Arabic pages, privacy notice, post redirects (flag AH_REDIRECT_OLD_POSTS), comment spam clean-up, Google Business Profile phone/description.

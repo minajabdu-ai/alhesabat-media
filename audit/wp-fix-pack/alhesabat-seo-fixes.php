@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Al Hesabat SEO Fixes (mu-plugin)
  * Description: Meta titles/descriptions, JSON-LD, Open Graph, sitemap clean-up, noindex of off-topic content, security headers, "#form" link and empty-alt fixes. Draft by the Al Hesabat SEO Chief. Install in wp-content/mu-plugins/ after review.
- * Version: 1.0
+ * Version: 1.1
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
@@ -130,13 +130,13 @@ add_action( 'template_redirect', function () {
 		$html = preg_replace( '/href=(["\'])#form\1/i', 'href="' . $contact . '"', $html );
 		$html = preg_replace_callback( '/<img\b([^>]*?)>/i', function ( $m ) {
 			$tag = $m[0];
-			if ( preg_match( '/\balt=(["\'])(.+?)\1/i', $tag ) ) { return $tag; }
+			if ( preg_match( '/\balt="[^"]+"/i', $tag ) || preg_match( "/\balt='[^']+'/i", $tag ) ) { return $tag; }
 			$src = ''; if ( preg_match( '/\bsrc=(["\'])(.*?)\1/i', $tag, $s ) ) { $src = strtolower( $s[2] ); }
 			if ( false !== strpos( $src, 'logo' ) ) { $alt = 'Al Hesabat logo | شعار الحسابات'; }
 			elseif ( preg_match( '/doctor|medic|nurse|anatomy|pathology/', $src ) ) { $alt = 'Healthcare professionals reviewing clinical cost data | مختصون صحيون يراجعون بيانات التكاليف السريرية'; }
 			elseif ( preg_match( '/tax|return/', $src ) ) { $alt = 'Tax and VAT documents | مستندات الضريبة'; }
 			else { $alt = 'Financial analysis and reporting | تحليل مالي وتقارير'; }
-			$tag = preg_replace( '/\balt=(["\'])\1/i', '', $tag );
+			$tag = preg_replace( '/\salt=(?:""|\'\')/i', '', $tag );
 			return preg_replace( '/<img\b/i', '<img alt="' . esc_attr( $alt ) . '"', $tag, 1 );
 		}, $html );
 		return $html;

@@ -2,12 +2,13 @@
 /**
  * Plugin Name: Al Hesabat SEO Fixes (mu-plugin)
  * Description: Meta titles/descriptions, JSON-LD, Open Graph, sitemap clean-up, noindex of off-topic content, security headers, "#form" link and empty-alt fixes. Draft by the Al Hesabat SEO Chief. Install in wp-content/mu-plugins/ after review.
- * Version: 1.1
+ * Version: 1.2
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /* ---- SET THESE BEFORE INSTALLING (confirm with the owner) ---- */
-const AH_PHONE        = '';   // e.g. '+971XXXXXXXXX' (confirm: site and Google profile currently differ)
+const AH_PHONE        = '+971508212422';
+const AH_PHONE_2      = '+971588146414';
 const AH_EMAIL        = 'info@alhesabat.ae';
 const AH_OG_IMAGE     = '';   // full URL of one 1200x630 branded image (leave empty to skip og:image)
 const AH_STREET       = '';   // street address if the owner wants it shown (leave empty to skip)
@@ -81,7 +82,7 @@ add_action( 'wp_head', function () {
 				return array( '@type' => 'Offer', 'itemOffered' => array( '@type' => 'Service', 'name' => $n ) );
 			}, array( 'Clinical Costing Services', 'Financial Performance Management', 'Accounting & Reporting', 'UAE VAT & Tax Compliance Support', 'Internal Controls & Compliance', 'Clinic Management Solutions' ) ) ),
 		);
-		if ( AH_PHONE ) { $org['telephone'] = AH_PHONE; }
+		$org['telephone'] = array_values( array_filter( array( AH_PHONE, AH_PHONE_2 ) ) );
 		if ( AH_OG_IMAGE ) { $org['image'] = AH_OG_IMAGE; }
 		echo '<script type="application/ld+json">' . wp_json_encode( $org, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
 	}
